@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "umivita_user",
+    "password": "Cot4429fusc@",
+    "database": "umivita_db",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "umivita_user",
+    "password": "Cot4429fusc@",
+    "database": "umivita_db",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "umivita_user",
+    "password": "Cot4429fusc@",
+    "database": "umivita_db",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
