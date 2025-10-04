@@ -1,50 +1,180 @@
-# Diretórios node e dependências
+# ==========================================
+# DEPENDÊNCIAS E NODE MODULES
+# ==========================================
 node_modules/
 **/node_modules/
+jspm_packages/
 
-# Arquivos de configuração de ambiente
+
+# ==========================================
+# ARQUIVOS DE CONFIGURAÇÃO DE AMBIENTE
+# ==========================================
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.*.local
+*.env
 
-# Logs
+
+# ==========================================
+# LOGS
+# ==========================================
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.npm
+.eslintcache
+.pnpm-debug.log*
 
-# Arquivos gerados pelo Sequelize CLI
+
+# ==========================================
+# SEQUELIZE
+# ==========================================
 .sequelize/
+backend/src/config/config.json
 
-# Pastas de build e saída (caso tenha build)
+
+# ==========================================
+# BUILDS E SAÍDAS
+# ==========================================
 dist/
 build/
+out/
+coverage/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.webpack/
 
-# Diretórios temporários do sistema operacional
+
+# ==========================================
+# IMAGENS E SVGs - NÃO COMMITAR
+# ==========================================
+# Ignorar todos os SVGs
+*.svg
+# Ignorar todas as imagens
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.webp
+# Ignorar pasta public completa (imagens, etc)
+frontend/public/
+
+
+# ==========================================
+# ARQUIVOS TEMPORÁRIOS DO SISTEMA
+# ==========================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Configurações de IDEs comuns
+
+# ==========================================
+# IDEs E EDITORES
+# ==========================================
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 *.sublime-project
 *.sublime-workspace
+.vscode-test
 
-# Arquivos temporários do npm
+
+# ==========================================
+# NPM E YARN
+# ==========================================
 .npm/
-
-# Cache yarn
 .yarn-integrity
 .yarn-cache/
+.pnp.*
+.pnp.js
 
-# Arquivos de debug
+
+# ==========================================
+# ARQUIVOS DE DEBUG E RUNTIME
+# ==========================================
 *.pid
 *.seed
+*.pid.lock
+pids/
 
-# Arquivos temporários do sistema
-*.swp
+
+# ==========================================
+# TESTES E COBERTURA
+# ==========================================
+coverage/
+*.lcov
+.nyc_output/
+lib-cov/
+
+
+# ==========================================
+# TYPESCRIPT
+# ==========================================
+*.tsbuildinfo
+
+
+# ==========================================
+# BANCO DE DADOS
+# ==========================================
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+
+# ==========================================
+# UPLOADS E ARQUIVOS TEMPORÁRIOS
+# ==========================================
+uploads/
+temp/
+tmp/
+*.tmp
+
+
+# ==========================================
+# CERTIFICADOS E CHAVES
+# ==========================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+
+# ==========================================
+# REACT E VITE
+# ==========================================
+.vite/
+*.local
+
+
+# ==========================================
+# ARQUIVOS DE BACKUP
+# ==========================================
+*.bak
+*.backup
 *~
 
-# Outras configs sensíveis (se aplicável)
-backend/src/config/config.json
+
+# ==========================================
+# OUTROS
+# ==========================================
+.turbo/
+.vercel/
