@@ -1,8 +1,8 @@
-<div align="center">
-  <img src="frontend/src/assets/logoarassp.png" alt="ARASSP Logo" width="200px">
+z<div align="center">
+  <img src="frontend/src/assets/logoarassp.png" alt="UmiVita Logo" width="200px">
 </div>
 
-# ARASSP – Análise de Risco Ambiental com Sensoriamento de Solo Portuário
+# UmiVita – Análise de Risco Ambiental com Sensoriamento de Solo Portuário
 
 > Sistema de monitoramento ambiental com sensores físicos e interface web para análise de risco em áreas portuárias.
 
@@ -10,7 +10,7 @@
 
 ## 🌍 Visão Geral do Projeto
 
-O **ARASSP** é uma solução que utiliza sensores de umidade e temperatura do solo, conectados a um microcontrolador ESP32, para identificar e alertar sobre riscos ambientais em áreas portuárias. Os dados são processados por um backend em Node.js, armazenados em um banco de dados MySQL e exibidos em uma interface web responsiva e acessível, com mapas, histórico e alertas.
+O **UmiVita** é uma solução que utiliza sensores de umidade e temperatura do solo, conectados a um microcontrolador ESP32, para identificar e alertar sobre riscos ambientais em áreas portuárias. Os dados são processados por um backend em Node.js, armazenados em um banco de dados MySQL e exibidos em uma interface web responsiva e acessível, com mapas, histórico e alertas.
 
 ---
 
@@ -50,8 +50,8 @@ O **ARASSP** é uma solução que utiliza sensores de umidade e temperatura do s
 ### 🔌 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/sofismoura/ARASSP.git
-cd arassp
+git clone https://github.com/joaoxaviersilva/UmiVita.git
+cd 
 ```
 
 ### 2. Configure o Banco de Dados
@@ -155,28 +155,11 @@ Escudo CSS
 ```
 A API REST é o meio de comunicação entre as partes do sistema:
 
-📡 ESP32 → envia dados de sensores (temperatura, umidade)
+📡 ESP32 → envia dados de sensores (temperatura, umidade e proximidade)
 🌐 API (Node.js/Express) → recebe, salva e fornece os dados
 🖥️ Interface Web → exibe dados, gráficos e alertas ao usuário
 
 ```
-
-```
-🧠 Funções da API:
-POST /dados-solo → ESP32 envia os dados
-GET /dados-solo → Web App busca os dados
-GET /alertas → Verifica se há risco e retorna alertas
-
-```
-
-```
-🧪 Exemplo de fluxo:
-ESP32 → POST https://api-arassp.vercel.app/dados-solo
-API → Salva no MySQL
-Web App → GET /dados-solo → Exibe os dados
-
-```
-
 
 ---
 
@@ -219,7 +202,7 @@ Web App → GET /dados-solo → Exibe os dados
 
 ## 🏫 ETEC Zona Leste
 
-Projeto desenvolvido por alunos da **ETEC Zona Leste** como parte da conclusão do curso técnico. O **ARASSP** representa a aplicação prática de conhecimentos em **IoT**, **desenvolvimento web** e **sustentabilidade ambiental**.
+Projeto desenvolvido por alunos da **ETEC Zona Leste** como parte da conclusão do curso técnico. O **UmiVita** representa a aplicação prática de conhecimentos em **IoT**, **desenvolvimento web** e **sustentabilidade ambiental**.
 
 ---
 
@@ -231,5 +214,5 @@ Sugestões, feedbacks e melhorias são sempre bem-vindos!
 ---
 
 <div align="center">
-  <img src="frontend/src/assets/logo-arassp.png" alt="ARASSPlogoicone" width="75px" />
+  <img src="frontend/src/assets/logo-UmiVita.png" alt="UmiVitalogoicone" width="75px" />
 </div>
