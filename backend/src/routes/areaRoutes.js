@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const AreaController = require('../controllers/AreaController');
+const authMiddleware = require('../middlewares/authMiddleware');
+
+// Todas as rotas de áreas precisam de autenticação
+router.use(authMiddleware);
 
 // GET /api/areas - listar todas as áreas
 router.get('/', AreaController.listarAreas);

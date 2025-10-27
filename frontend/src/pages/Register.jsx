@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import api from "../services/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-const Cadastro = () => {
+const Register = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -12,19 +13,37 @@ const Cadastro = () => {
     email: "",
     senha: "",
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // ⬅️ MODAL
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Aqui vamos integrar com a API depois
-    console.log("Cadastro:", formData);
+    setError("");
+    setLoading(true);
+
+    try {
+      await api.post('/auth/register', formData);
+      setShowSuccessModal(true); // ⬅️ MOSTRA MODAL
+    } catch (err) {
+      setError(err.response?.data?.erro || "Erro ao realizar cadastro. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
     navigate("/");
+  };
+
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    navigate("/login");
   };
 
   return (
@@ -77,6 +96,13 @@ const Cadastro = () => {
                 {/* Lado Direito - Formulário */}
                 <div className="flex flex-col justify-between p-12">
                   <form onSubmit={handleSubmit} className="space-y-6 mt-12">
+                    {/* Mensagem de Erro */}
+                    {error && (
+                      <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-xl text-sm">
+                        {error}
+                      </div>
+                    )}
+
                     {/* Nome */}
                     <div>
                       <label className="text-sm font-bold mb-2 block" style={{ fontFamily: 'Albert Sans, sans-serif' }}>
@@ -104,6 +130,7 @@ const Cadastro = () => {
                             WebkitBackdropFilter: "blur(2px)",
                           }}
                           required
+                          disabled={loading}
                         />
                       </div>
                     </div>
@@ -135,6 +162,7 @@ const Cadastro = () => {
                             WebkitBackdropFilter: "blur(2px)",
                           }}
                           required
+                          disabled={loading}
                         />
                       </div>
                     </div>
@@ -166,11 +194,13 @@ const Cadastro = () => {
                             WebkitBackdropFilter: "blur(2px)",
                           }}
                           required
+                          disabled={loading}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                          disabled={loading}
                         >
                           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                         </button>
@@ -198,6 +228,7 @@ const Cadastro = () => {
                             backdropFilter: "blur(2px)",
                             WebkitBackdropFilter: "blur(2px)",
                           }}
+                          disabled={loading}
                         >
                           Cancelar
                         </button>
@@ -206,14 +237,15 @@ const Cadastro = () => {
                       {/* Botão Cadastrar */}
                       <button
                         type="submit"
-                        className="flex-1 py-3 text-white text-base bg-gradient-to-r from-blue to-green rounded-2xl hover:brightness-110 hover:scale-105 transition-all duration-300"
+                        className="flex-1 py-3 text-white text-base bg-gradient-to-r from-blue to-green rounded-2xl hover:brightness-110 hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           boxShadow: "5px 5px 15px rgba(0,0,0,0.15)",
                           fontFamily: 'Albert Sans, sans-serif',
                           borderRadius: "16px",
                         }}
+                        disabled={loading}
                       >
-                        Cadastrar
+                        {loading ? "Cadastrando..." : "Cadastrar"}
                       </button>
                     </div>
                   </form>
@@ -229,6 +261,52 @@ const Cadastro = () => {
 
       <Footer />
 
+      {/* MODAL DE SUCESSO */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 animate-fade-in">
+          <div className="animate-fade-in-up">
+            <div
+              className="p-1 rounded-[30px]"
+              style={{
+                background: "linear-gradient(90deg, #59CDFF, #5ADB62)",
+                borderRadius: "30px",
+              }}
+            >
+              <div
+                className="bg-white rounded-[26px] p-8 max-w-md text-center"
+                style={{
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                }}
+              >
+                <div className="flex justify-center mb-6">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue to-green flex items-center justify-center">
+                    <CheckCircle size={48} className="text-white" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'Albert Sans, sans-serif' }}>
+                  Cadastro Realizado!
+                </h2>
+                <p className="text-gray-600 mb-8" style={{ fontFamily: 'Albert Sans, sans-serif' }}>
+                  Sua conta foi criada com sucesso! Faça login para continuar.
+                </p>
+                <button
+                  onClick={handleModalClose}
+                  className="w-full py-3 text-white text-base bg-gradient-to-r from-blue to-green rounded-2xl hover:brightness-110 hover:scale-105 transition-all duration-300"
+                  style={{
+                    boxShadow: "5px 5px 15px rgba(0,0,0,0.15)",
+                    fontFamily: 'Albert Sans, sans-serif',
+                    borderRadius: "16px",
+                  }}
+                >
+                  Ir para Login
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CSS Animações */}
       <style jsx>{`
         @keyframes fadeInUp {
@@ -239,6 +317,15 @@ const Cadastro = () => {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
           }
         }
 
@@ -258,6 +345,10 @@ const Cadastro = () => {
           animation: fadeInUp 0.6s ease-out forwards;
         }
 
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+
         .animated-border {
           background: linear-gradient(
             90deg,
@@ -275,4 +366,4 @@ const Cadastro = () => {
   );
 };
 
-export default Cadastro;
+export default Register;

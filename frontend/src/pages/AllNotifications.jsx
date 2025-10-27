@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Home,
   MapPin,
@@ -26,6 +27,8 @@ const AllNotifications = () => {
   const [notifications, setNotifications] = useState(3);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("todas");
+  const [allNotifications, setAllNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const menuItems = [
     { id: "dashboard", icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -37,21 +40,65 @@ const AllNotifications = () => {
     { id: "perfil", icon: User, label: "Perfil", path: "/dashboard/perfil" },
   ];
 
-  // 15 notificações de exemplo
-  const allNotifications = [
-    { id: 1, tipo: "alerta", titulo: "Alerta de Temperatura Crítica", descricao: "Área Portuária B atingiu 35°C", hora: "14:30", data: "04/10/2025", lida: false, icon: AlertTriangle, color: "#FF6B6B", bgColor: "#FFE5E5" },
-    { id: 2, tipo: "info", titulo: "Relatório Mensal Disponível", descricao: "O relatório de outubro está pronto", hora: "10:15", data: "04/10/2025", lida: false, icon: Info, color: "#4FC3F7", bgColor: "#E3F2FD" },
-    { id: 3, tipo: "sucesso", titulo: "Backup Concluído", descricao: "Backup automático realizado com sucesso", hora: "08:00", data: "04/10/2025", lida: false, icon: CheckCircle, color: "#5ADB62", bgColor: "#E8F5E9" },
-    { id: 4, tipo: "alerta", titulo: "Umidade Baixa Detectada", descricao: "Área C registrou 35% de umidade", hora: "16:45", data: "03/10/2025", lida: true, icon: AlertTriangle, color: "#FF6B6B", bgColor: "#FFE5E5" },
-    { id: 5, tipo: "info", titulo: "Manutenção Programada", descricao: "Sensores da Área D em manutenção", hora: "14:00", data: "03/10/2025", lida: true, icon: Info, color: "#4FC3F7", bgColor: "#E3F2FD" },
-    { id: 6, tipo: "sucesso", titulo: "Atualização Concluída", descricao: "Sistema atualizado para versão 2.5", hora: "09:30", data: "03/10/2025", lida: true, icon: CheckCircle, color: "#5ADB62", bgColor: "#E8F5E9" },
-    { id: 7, tipo: "alerta", titulo: "Temperatura Alta", descricao: "Área A atingiu 33°C", hora: "18:20", data: "02/10/2025", lida: true, icon: AlertTriangle, color: "#FF6B6B", bgColor: "#FFE5E5" },
-    { id: 8, tipo: "info", titulo: "Novo Sensor Ativado", descricao: "Sensor de temperatura instalado na Área E", hora: "11:00", data: "02/10/2025", lida: true, icon: Info, color: "#4FC3F7", bgColor: "#E3F2FD" },
-    { id: 9, tipo: "sucesso", titulo: "Calibração Completa", descricao: "Todos os sensores calibrados", hora: "08:15", data: "02/10/2025", lida: true, icon: CheckCircle, color: "#5ADB62", bgColor: "#E8F5E9" },
-    { id: 10, tipo: "alerta", titulo: "Umidade Crítica", descricao: "Área B registrou 90% de umidade", hora: "15:30", data: "01/10/2025", lida: true, icon: AlertTriangle, color: "#FF6B6B", bgColor: "#FFE5E5" },
-    { id: 11, tipo: "info", titulo: "Relatório Semanal", descricao: "Relatório da semana 40 disponível", hora: "10:00", data: "01/10/2025", lida: true, icon: Info, color: "#4FC3F7", bgColor: "#E3F2FD" },
-    { id: 12, tipo: "sucesso", titulo: "Teste de Sistema", descricao: "Teste de comunicação bem-sucedido", hora: "07:45", data: "01/10/2025", lida: true, icon: CheckCircle, color: "#5ADB62", bgColor: "#E8F5E9" },
-  ];
+  // ⬇️ BUSCAR DADOS REAIS DO BACKEND
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/api/historicos");
+        
+        // Transformar os dados do backend no formato da página
+        const formattedNotifications = response.data.data.map((item, index) => {
+          const date = new Date(item.dataHora);
+          const hora = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          const data = date.toLocaleDateString('pt-BR');
+
+          // Determinar tipo e cor com base no nível de contaminação
+          let tipo, icon, color, bgColor, titulo;
+          
+          if (item.nivel_contaminacao === 'alto') {
+            tipo = 'alerta';
+            icon = AlertTriangle;
+            color = '#FF6B6B';
+            bgColor = '#FFE5E5';
+            titulo = `Alerta de Contaminação Alta - Sensor ${item.sensor?.tipo || item.sensorId}`;
+          } else if (item.nivel_contaminacao === 'medio') {
+            tipo = 'info';
+            icon = Info;
+            color = '#FFB74D';
+            bgColor = '#FFF3E0';
+            titulo = `Contaminação Média - Sensor ${item.sensor?.tipo || item.sensorId}`;
+          } else {
+            tipo = 'sucesso';
+            icon = CheckCircle;
+            color = '#5ADB62';
+            bgColor = '#E8F5E9';
+            titulo = `Contaminação Normal - Sensor ${item.sensor?.tipo || item.sensorId}`;
+          }
+
+          return {
+            id: item.id,
+            tipo,
+            titulo,
+            descricao: `Temp: ${item.temperatura}°C | Umid: ${item.umidade}% | Área: ${item.sensor?.area?.nome || 'N/A'}`,
+            hora,
+            data,
+            lida: index > 2, // Primeiros 3 não lidos
+            icon,
+            color,
+            bgColor,
+          };
+        });
+
+        setAllNotifications(formattedNotifications);
+      } catch (error) {
+        console.error("Erro ao buscar notificações:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   const handleLogout = () => {
     navigate("/login");
@@ -63,11 +110,15 @@ const AllNotifications = () => {
   };
 
   const markAsRead = (id) => {
-    console.log(`Marcando notificação ${id} como lida`);
+    setAllNotifications(prev =>
+      prev.map(notif =>
+        notif.id === id ? { ...notif, lida: true } : notif
+      )
+    );
   };
 
   const deleteNotification = (id) => {
-    console.log(`Deletando notificação ${id}`);
+    setAllNotifications(prev => prev.filter(notif => notif.id !== id));
   };
 
   const filteredNotifications = allNotifications.filter(notif => {
@@ -240,68 +291,80 @@ const AllNotifications = () => {
               </h3>
             </div>
 
-            {/* Lista de Notificações */}
-            <div className="space-y-3">
-              {filteredNotifications.map((notif) => {
-                const NotifIcon = notif.icon;
-                return (
-                  <div
-                    key={notif.id}
-                    className={`flex items-start gap-4 p-4 rounded-xl border-2 hover:scale-[1.01] transition-all duration-300 ${notif.lida ? 'opacity-60' : ''}`}
-                    style={{
-                      backgroundColor: notif.bgColor,
-                      borderColor: notif.color,
-                    }}
-                  >
-                    <div 
-                      className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+            {/* Loading / Vazio / Lista */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                <p className="text-sm text-gray-600 mt-4">Carregando notificações...</p>
+              </div>
+            ) : filteredNotifications.length === 0 ? (
+              <div className="text-center py-12">
+                <Bell size={48} className="text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Nenhuma notificação encontrada</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredNotifications.map((notif) => {
+                  const NotifIcon = notif.icon;
+                  return (
+                    <div
+                      key={notif.id}
+                      className={`flex items-start gap-4 p-4 rounded-xl border-2 hover:scale-[1.01] transition-all duration-300 ${notif.lida ? 'opacity-60' : ''}`}
                       style={{
-                        backgroundColor: notif.color,
-                        boxShadow: `0 4px 12px ${notif.color}66`,
+                        backgroundColor: notif.bgColor,
+                        borderColor: notif.color,
                       }}
                     >
-                      <NotifIcon size={20} className="text-white" strokeWidth={2.5} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-1">
-                        <div>
-                          <h4 className="font-bold text-gray-800">{notif.titulo}</h4>
-                          {notif.lida && <span className="text-xs text-gray-500">Lida</span>}
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Calendar size={12} />
-                            <span>{notif.data}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Clock size={12} />
-                            <span>{notif.hora}</span>
-                          </div>
-                        </div>
+                      <div 
+                        className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{
+                          backgroundColor: notif.color,
+                          boxShadow: `0 4px 12px ${notif.color}66`,
+                        }}
+                      >
+                        <NotifIcon size={20} className="text-white" strokeWidth={2.5} />
                       </div>
-                      <p className="text-sm text-gray-700 mb-3">{notif.descricao}</p>
-                      <div className="flex items-center gap-2">
-                        {!notif.lida && (
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-1">
+                          <div>
+                            <h4 className="font-bold text-gray-800">{notif.titulo}</h4>
+                            {notif.lida && <span className="text-xs text-gray-500">Lida</span>}
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Calendar size={12} />
+                              <span>{notif.data}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Clock size={12} />
+                              <span>{notif.hora}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-3">{notif.descricao}</p>
+                        <div className="flex items-center gap-2">
+                          {!notif.lida && (
+                            <button
+                              onClick={() => markAsRead(notif.id)}
+                              className="text-xs px-3 py-1.5 bg-white/60 hover:bg-white/80 rounded-lg font-medium text-gray-700 transition-all"
+                            >
+                              Marcar como lida
+                            </button>
+                          )}
                           <button
-                            onClick={() => markAsRead(notif.id)}
-                            className="text-xs px-3 py-1.5 bg-white/60 hover:bg-white/80 rounded-lg font-medium text-gray-700 transition-all"
+                            onClick={() => deleteNotification(notif.id)}
+                            className="text-xs px-3 py-1.5 bg-white/60 hover:bg-red-50 rounded-lg font-medium text-red-600 transition-all flex items-center gap-1"
                           >
-                            Marcar como lida
+                            <Trash2 size={12} />
+                            Excluir
                           </button>
-                        )}
-                        <button
-                          onClick={() => deleteNotification(notif.id)}
-                          className="text-xs px-3 py-1.5 bg-white/60 hover:bg-red-50 rounded-lg font-medium text-red-600 transition-all flex items-center gap-1"
-                        >
-                          <Trash2 size={12} />
-                          Excluir
-                        </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </main>

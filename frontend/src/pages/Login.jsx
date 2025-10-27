@@ -1,28 +1,39 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     senha: "",
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Aqui vamos integrar com a API depois
-    console.log("Login:", formData);
-    
-    // Redirecionar para o Dashboard
-    navigate("/dashboard");
+    setError("");
+    setLoading(true);
+
+    try {
+      await login(formData.email, formData.senha);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.error || "Erro ao fazer login. Verifique suas credenciais.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -79,6 +90,13 @@ const Login = () => {
                 {/* Lado Direito - Formulário */}
                 <div className="flex flex-col justify-between p-12">
                   <form onSubmit={handleSubmit} className="space-y-6 mt-12">
+                    {/* Mensagem de Erro */}
+                    {error && (
+                      <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-xl text-sm">
+                        {error}
+                      </div>
+                    )}
+
                     {/* Email */}
                     <div>
                       <label className="text-sm font-bold mb-2 block" style={{ fontFamily: 'Albert Sans, sans-serif' }}>
@@ -106,6 +124,7 @@ const Login = () => {
                             WebkitBackdropFilter: "blur(2px)",
                           }}
                           required
+                          disabled={loading}
                         />
                       </div>
                     </div>
@@ -137,11 +156,13 @@ const Login = () => {
                             WebkitBackdropFilter: "blur(2px)",
                           }}
                           required
+                          disabled={loading}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                          disabled={loading}
                         >
                           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                         </button>
@@ -169,6 +190,7 @@ const Login = () => {
                             backdropFilter: "blur(2px)",
                             WebkitBackdropFilter: "blur(2px)",
                           }}
+                          disabled={loading}
                         >
                           Cancelar
                         </button>
@@ -177,14 +199,15 @@ const Login = () => {
                       {/* Botão Entrar */}
                       <button
                         type="submit"
-                        className="flex-1 py-3 text-white text-base bg-gradient-to-r from-blue to-green rounded-2xl hover:brightness-110 hover:scale-105 transition-all duration-300"
+                        className="flex-1 py-3 text-white text-base bg-gradient-to-r from-blue to-green rounded-2xl hover:brightness-110 hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           boxShadow: "5px 5px 15px rgba(0,0,0,0.15)",
                           fontFamily: 'Albert Sans, sans-serif',
                           borderRadius: "16px",
                         }}
+                        disabled={loading}
                       >
-                        Entrar
+                        {loading ? "Entrando..." : "Entrar"}
                       </button>
                     </div>
                   </form>

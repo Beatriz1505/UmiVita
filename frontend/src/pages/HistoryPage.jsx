@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 import {
   Home,
   MapPin,
@@ -13,14 +15,24 @@ import {
   AlertTriangle,
   Thermometer,
   Droplet,
-  Calendar,
+  Activity,
 } from "lucide-react";
 
 const HistoryPage = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [activePage, setActivePage] = useState("historico");
-  const [notifications, setNotifications] = useState(3);
-  const [selectedPeriod, setSelectedPeriod] = useState("hoje");
+  const [notifications, setNotifications] = useState(0);
+  
+  // Estados
+  const [ultimosEventos, setUltimosEventos] = useState([]);
+  const [stats, setStats] = useState({
+    totalEventos: 0,
+    alertasGerados: 0,
+    leiturasTemp: 0,
+    leiturasUmid: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
   const menuItems = [
     { id: "dashboard", icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -32,40 +44,45 @@ const HistoryPage = () => {
     { id: "perfil", icon: User, label: "Perfil", path: "/dashboard/perfil" },
   ];
 
-  const historyEvents = [
-    {
-      id: 1,
-      tipo: "alerta",
-      titulo: "Alerta de Temperatura",
-      descricao: "Área Portuária B atingiu 35°C",
-      hora: "14:30",
-      icon: AlertTriangle,
-      color: "#FF6B6B",
-      colorEnd: "#FF8E53",
-    },
-    {
-      id: 2,
-      tipo: "temperatura",
-      titulo: "Leitura de Temperatura",
-      descricao: "Nova leitura registrada: 24.5°C",
-      hora: "13:15",
-      icon: Thermometer,
-      color: "#4FC3F7",
-      colorEnd: "#29B6F6",
-    },
-    {
-      id: 3,
-      tipo: "umidade",
-      titulo: "Leitura de Umidade",
-      descricao: "Nova leitura registrada: 68.2%",
-      hora: "13:15",
-      icon: Droplet,
-      color: "#4FC3F7",
-      colorEnd: "#29B6F6",
-    },
-  ];
+  useEffect(() => {
+    fetchHistoricoResumo();
+    
+    // Atualizar a cada 60 segundos
+    const interval = setInterval(fetchHistoricoResumo, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchHistoricoResumo = async () => {
+    try {
+      setLoading(true);
+      
+      // Buscar últimos 3 eventos
+      const responseEventos = await api.get('/historicos?limit=3');
+      const dados = responseEventos.data.data || responseEventos.data;
+      setUltimosEventos(Array.isArray(dados) ? dados.slice(0, 3) : []);
+      
+      // Buscar estatísticas
+      const responseStats = await api.get('/historicos/stats');
+      setStats({
+        totalEventos: responseStats.data.totalEventos || 0,
+        alertasGerados: responseStats.data.alertasGerados || 0,
+        leiturasTemp: responseStats.data.leiturasTemp || 0,
+        leiturasUmid: responseStats.data.leiturasUmid || 0,
+      });
+      
+      // Buscar notificações não lidas
+      const responseNotif = await api.get('/dashboard/stats');
+      setNotifications(responseNotif.data.alertasAtivos || 0);
+      
+    } catch (error) {
+      console.error('Erro ao buscar histórico:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
+    logout();
     navigate("/login");
   };
 
@@ -74,12 +91,31 @@ const HistoryPage = () => {
     navigate(item.path);
   };
 
+  const getEventIcon = (event) => {
+    const tipo = event.sensor?.tipo || '';
+    if (tipo.includes('temperatura')) return Thermometer;
+    if (tipo.includes('umidade')) return Droplet;
+    return AlertTriangle;
+  };
+
+  const getEventColor = (event) => {
+    const nivel = event.nivel_contaminacao || 'baixo';
+    if (nivel === 'alto') return { color: '#FF6B6B', colorEnd: '#FF8E53' };
+    if (nivel === 'medio') return { color: '#FFA726', colorEnd: '#FFB74D' };
+    return { color: '#4FC3F7', colorEnd: '#29B6F6' };
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '--:--';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div 
       className="min-h-screen h-screen flex relative overflow-hidden" 
       style={{ fontFamily: "Albert Sans, sans-serif" }}
     >
-      {/* Background Gradient */}
       <div 
         className="absolute inset-0 -z-10"
         style={{
@@ -87,7 +123,7 @@ const HistoryPage = () => {
         }}
       ></div>
 
-      {/* Sidebar com Glassmorphism */}
+      {/* Sidebar */}
       <aside 
         className="w-64 flex flex-col"
         style={{
@@ -98,7 +134,6 @@ const HistoryPage = () => {
           boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
         }}
       >
-        {/* Logo */}
         <div className="p-6 border-b border-white/20">
           <h1 className="font-title text-2xl font-bold bg-gradient-to-r from-blue to-green text-transparent bg-clip-text">
             UmiVita
@@ -106,8 +141,7 @@ const HistoryPage = () => {
           <p className="text-xs text-gray-700 mt-1">Monitoramento Ambiental</p>
         </div>
 
-        {/* Menu */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -122,7 +156,7 @@ const HistoryPage = () => {
               >
                 <Icon size={20} />
                 <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
-                {item.badge && (
+                {item.badge > 0 && (
                   <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                     {item.badge}
                   </span>
@@ -132,7 +166,6 @@ const HistoryPage = () => {
           })}
         </nav>
 
-        {/* Logout */}
         <div className="p-4 border-t border-white/20">
           <button
             onClick={handleLogout}
@@ -146,7 +179,6 @@ const HistoryPage = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header com Glassmorphism */}
         <header 
           className="p-6 shrink-0"
           style={{
@@ -162,47 +194,32 @@ const HistoryPage = () => {
               <h2 className="text-2xl font-bold text-gray-800">
                 Histórico 🕐
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Acompanhe todos os eventos do sistema
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-sm text-gray-600">
+                  Acompanhe todos os eventos do sistema
+                </p>
+                <Activity size={14} className={loading ? "animate-pulse text-green-500" : "text-gray-400"} />
+              </div>
             </div>
             <div className="flex items-center gap-4">
-              {/* Filtro de Período */}
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/40 rounded-xl border border-white/50">
-                <Calendar size={18} className="text-gray-600" />
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="bg-transparent text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
-                >
-                  <option value="hoje">Hoje</option>
-                  <option value="ontem">Ontem</option>
-                  <option value="7dias">Últimos 7 dias</option>
-                  <option value="30dias">Últimos 30 dias</option>
-                </select>
-              </div>
-              
-              {/* Notificações */}
               <button className="relative p-3 hover:bg-white/30 rounded-full transition-all duration-300">
                 <Bell size={20} className="text-gray-700" />
                 {notifications > 0 && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
                 )}
               </button>
-              
-              {/* Avatar */}
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue to-green flex items-center justify-center text-white font-bold">
-                A
+                {user?.nome?.charAt(0).toUpperCase() || 'U'}
               </div>
             </div>
           </div>
         </header>
 
-        {/* Content - Timeline + Estatísticas SEM SCROLL */}
+        {/* Content */}
         <div className="flex-1 p-6 grid grid-cols-12 gap-6 overflow-hidden">
           {/* Timeline */}
           <div
-            className="col-span-8 rounded-2xl p-5"
+            className="col-span-8 rounded-2xl p-5 flex flex-col"
             style={{
               background: "rgba(255, 255, 255, 0.25)",
               backdropFilter: "blur(20px)",
@@ -232,36 +249,50 @@ const HistoryPage = () => {
               </button>
             </div>
 
-            {/* Timeline Items - APENAS 3 */}
-            <div className="space-y-3">
-              {historyEvents.map((event) => {
-                const EventIcon = event.icon;
-                return (
-                  <div
-                    key={event.id}
-                    className="flex items-start gap-4 p-3 rounded-xl bg-white/40 border border-white/50 hover:bg-white/60 transition-all duration-300"
-                  >
-                    <div 
-                      className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: `linear-gradient(135deg, ${event.color} 0%, ${event.colorEnd} 100%)`,
-                        boxShadow: `0 4px 12px ${event.color}66`,
-                      }}
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : ultimosEventos.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-gray-500">Nenhum evento registrado ainda</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {ultimosEventos.map((event) => {
+                  const EventIcon = getEventIcon(event);
+                  const colors = getEventColor(event);
+                  return (
+                    <div
+                      key={event.id}
+                      className="flex items-start gap-4 p-3 rounded-xl bg-white/40 border border-white/50 hover:bg-white/60 transition-all duration-300"
                     >
-                      <EventIcon size={20} className="text-white" strokeWidth={2.5} />
+                      <div 
+                        className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: `linear-gradient(135deg, ${colors.color} 0%, ${colors.colorEnd} 100%)`,
+                          boxShadow: `0 4px 12px ${colors.color}66`,
+                        }}
+                      >
+                        <EventIcon size={20} className="text-white" strokeWidth={2.5} />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-800 mb-1">
+                          Sensor {event.sensorId} - {event.sensor?.tipo || 'Desconhecido'}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Temp: {event.temperatura}°C | Umid: {event.umidade}% | Contam: {event.nivel_contaminacao}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Clock size={14} />
+                        <span>{formatDate(event.dataHora)}</span>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-800 mb-1">{event.titulo}</h4>
-                      <p className="text-sm text-gray-600">{event.descricao}</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Clock size={14} />
-                      <span>{event.hora}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Estatísticas */}
@@ -275,23 +306,23 @@ const HistoryPage = () => {
               boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
             }}
           >
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Estatísticas do Dia</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Estatísticas</h3>
             <div className="space-y-3">
               <div className="p-4 rounded-xl bg-white/40 border border-white/50">
                 <p className="text-xs text-gray-600 mb-1">Total de Eventos</p>
-                <p className="text-3xl font-bold text-gray-800">47</p>
+                <p className="text-3xl font-bold text-gray-800">{stats.totalEventos}</p>
               </div>
               <div className="p-4 rounded-xl bg-white/40 border border-white/50">
                 <p className="text-xs text-gray-600 mb-1">Alertas Gerados</p>
-                <p className="text-2xl font-bold text-red-600">8</p>
+                <p className="text-2xl font-bold text-red-600">{stats.alertasGerados}</p>
               </div>
               <div className="p-4 rounded-xl bg-white/40 border border-white/50">
                 <p className="text-xs text-gray-600 mb-1">Leituras de Temp.</p>
-                <p className="text-2xl font-bold text-blue-600">156</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.leiturasTemp}</p>
               </div>
               <div className="p-4 rounded-xl bg-white/40 border border-white/50">
                 <p className="text-xs text-gray-600 mb-1">Leituras de Umid.</p>
-                <p className="text-2xl font-bold text-cyan-600">156</p>
+                <p className="text-2xl font-bold text-cyan-600">{stats.leiturasUmid}</p>
               </div>
             </div>
           </div>

@@ -17,8 +17,7 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       coordenadas: {
-        // Armazenar coordenadas no formato JSON (GeoJSON)
-        type: Sequelize.JSON,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       status_risco: {

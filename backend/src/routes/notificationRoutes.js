@@ -1,22 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const NotificationController = require('../controllers/NotificationController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
-// Rotas para notificações
+// Todas as rotas de notificações precisam de autenticação
+router.use(authMiddleware);
 
-// GET /notificacoes - listar notificações, filtro opcional por área e status via query ?areaId=1&status=nao_visualizada
+// GET /api/notificacoes - listar notificações, filtro opcional por área e status via query ?areaId=1&status=nao_visualizada
 router.get('/', NotificationController.listarNotificacoes);
 
-// GET /notificacoes/:id - buscar notificação por ID
+// GET /api/notificacoes/:id - buscar notificação por ID
 router.get('/:id', NotificationController.buscarNotificacaoPorId);
 
-// POST /notificacoes - criar nova notificação
+// POST /api/notificacoes - criar nova notificação
 router.post('/', NotificationController.criarNotificacao);
 
-// PUT /notificacoes/:id - atualizar notificação
+// PUT /api/notificacoes/:id - atualizar notificação
 router.put('/:id', NotificationController.atualizarNotificacao);
 
-// DELETE /notificacoes/:id - deletar notificação
+// DELETE /api/notificacoes/:id - deletar notificação
 router.delete('/:id', NotificationController.deletarNotificacao);
 
 module.exports = router;

@@ -22,6 +22,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.FLOAT,
         allowNull: true,
       },
+      nivel_contaminacao: {
+        type: DataTypes.ENUM('baixo', 'medio', 'alto'),
+        allowNull: true,
+        defaultValue: 'baixo',
+      },
     },
     {
       sequelize,

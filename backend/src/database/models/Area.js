@@ -18,9 +18,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       descricao: DataTypes.TEXT,
       coordenadas: {
-        type: DataTypes.JSON,
-        allowNull: false,
-      },
+       type: DataTypes.STRING,
+       allowNull: false,
+},
+
       status_risco: {
         type: DataTypes.ENUM('baixo', 'medio', 'alto'),
         defaultValue: 'baixo',
